@@ -5,36 +5,36 @@ CHANNEL_HANDLE = "@technreview"
 
 TITLE_TEMPLATES = {
     "comparisons": [
-        "{product_a} vs {product_b} — Which One Wins? ⚡",
-        "{product_a} vs {product_b}: The Ultimate Comparison",
-        "Don't Buy {product_a} or {product_b} Until You Watch This",
-        "This {product_a} vs {product_b} Comparison Changes Everything",
-        "{product_a} vs {product_b} — The Winner Will Surprise You",
-        "I Compared {product_a} and {product_b} So You Don't Have To",
-        "Stop Wondering: {product_a} vs {product_b} — Full Breakdown",
+        "{product_a} vs {product_b} — Honest Review After Testing Both",
+        "I Tested {product_a} and {product_b} — Here's the Truth",
+        "{product_a} vs {product_b}: Which One Should You Buy?",
+        "Don't Buy {product_a} or {product_b} Until You Watch This Review",
+        "{product_a} vs {product_b} — Real Pros and Cons",
+        "Which Is Better For You? {product_a} vs {product_b}",
+        "{product_a} vs {product_b} — 5 Category Breakdown",
         "The Real Difference Between {product_a} and {product_b}",
-        "Which Is Better? {product_a} vs {product_b} 🔥",
-        "{product_a} vs {product_b} — 5 Tests, 1 Winner",
+        "Honest Review: {product_a} vs {product_b}",
+        "Stop Wondering — {product_a} vs {product_b} Full Review",
     ],
 }
 
 DESCRIPTION_TEMPLATES = {
     "comparisons": [
-        "{product_a} vs {product_b} — which one should you buy?\n\n"
-        "We compared 5 key categories to find the real winner.\n\n"
-        "Which one would YOU pick? Let me know in the comments! 👇",
-        "Looking to buy {product_a} or {product_b}? Here's everything you need to know before pulling the trigger.\n\n"
-        "Comment your choice below! 💬",
+        "I tested {product_a} and {product_b} so you don't have to.\n\n"
+        "Here's my honest breakdown across 5 categories — no bias, just real pros and cons.\n\n"
+        "Which one fits your needs? Let me know in the comments! 👇",
+        "Looking to buy {product_a} or {product_b}? Here's everything you need to know before spending your money.\n\n"
+        "Full review with real pros and cons. Comment your pick below! 💬",
     ],
 }
 
 ENGAGEMENT_TEMPLATES = [
-    "Which one would you pick? Comment below! 👇",
-    "Are you Team A or Team B? Drop your answer! ⬇️",
+    "Which one fits your needs better? Comment below! 👇",
+    "Which are you going with? Drop your choice! ⬇️",
     "I read every comment — tell me your pick! 💬",
     "Share this with someone who's deciding between these two 🔄",
     "Save this for your next purchase decision 📌",
-    "Follow for more honest tech comparisons! 🔔",
+    "Follow for more honest tech reviews! 🔔",
 ]
 
 
@@ -44,8 +44,6 @@ def generate_viral_title(mode: str, data: dict) -> str:
     template = template.replace("{product_a}", data.get("product_a", "Product A"))
     template = template.replace("{product_b}", data.get("product_b", "Product B"))
     template = template.replace("{hook}", data.get("hook", ""))
-    template = template.replace("{reason}", data.get("verdict_reason", ""))
-    template = template.replace("{winner}", data.get("verdict", ""))
 
     if len(template) > 90:
         template = template[:87] + "..."
@@ -55,7 +53,7 @@ def generate_viral_title(mode: str, data: dict) -> str:
 
 def generate_viral_description(mode: str, data: dict, script: str = "") -> str:
     desc_templates = DESCRIPTION_TEMPLATES.get(mode, [
-        "{product_a} vs {product_b} — watch till the end for the winner!\n\n"
+        "{product_a} vs {product_b} — honest review.\n\n"
         "Comment what you think! 👇\n\n{hashtags}"
     ])
     template = random.choice(desc_templates)
@@ -74,9 +72,9 @@ def generate_viral_description(mode: str, data: dict, script: str = "") -> str:
 
     engagement_prompt = random.choice([
         "Which one wins in your opinion? I read every comment! 💬",
-        "Drop a 🔥 if you agree with the winner!",
+        "Drop a 🔥 if you found this review helpful!",
         "Save this for later and share with a friend! 📌",
-        "Follow for daily tech comparisons! 🚀",
+        "Follow for daily honest tech reviews! 🚀",
         "Comment your choice below! 👇",
     ])
     template += f"\n\n{engagement_prompt}"
@@ -85,11 +83,13 @@ def generate_viral_description(mode: str, data: dict, script: str = "") -> str:
 
 
 def generate_viral_tags(mode: str, data: dict) -> list[str]:
-    tags = ["shorts", "techreview", "comparison", "techtips", product_tag := data.get("product_a", "").lower().replace(" ", ""), data.get("product_b", "").lower().replace(" ", "")]
+    tags = ["shorts", "techreview", "review", "techtips",
+            data.get("product_a", "").lower().replace(" ", ""),
+            data.get("product_b", "").lower().replace(" ", "")]
     tags.extend([
         "versus", "vs", "productcomparison",
-        "techshorts", "whichisbetter", "buyingguide",
-        "tech", "gadgets", "review",
+        "techshorts", "comparison", "buyingguide",
+        "tech", "gadgets", "honestreview",
     ])
     if "smartphone" in data.get("product_a", "").lower() or "phone" in data.get("product_a", "").lower():
         tags.extend(["smartphone", "phonereview", "phonecomparison"])
@@ -113,6 +113,6 @@ def generate_viral_tags(mode: str, data: dict) -> list[str]:
 
 
 def generate_viral_hashtags(mode: str, count: int = 6) -> str:
-    selected = ["#shorts", "#techreview", "#comparison", "#versus", "#techtips", "#gadgets"]
+    selected = ["#shorts", "#techreview", "#honestreview", "#comparison", "#techtips", "#gadgets"]
     random.shuffle(selected)
     return " ".join(selected[:count])

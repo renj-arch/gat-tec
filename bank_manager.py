@@ -6,21 +6,23 @@ BANK_DIR = Path(__file__).parent / "bank"
 
 REFILL_PROMPTS = {
     "comparisons": (
-        "Write a tech product comparison for a YouTube Shorts video comparing two popular {category}. "
-        "The video will have 5 comparison points. "
+        "Write an honest tech review comparison for a YouTube Shorts comparing two popular {category}. "
         "Never repeat products from this avoid list:"
         "\n---\n{avoid}\n---\n"
         "Format exactly:\n"
         "PRODUCT_A: [product name]\n"
         "PRODUCT_B: [product name]\n"
-        "POINT_1: [winner name] wins — [one sentence why]\n"
-        "POINT_2: [winner name] wins — [one sentence why]\n"
-        "POINT_3: [winner name] wins — [one sentence why]\n"
-        "POINT_4: [winner name] wins — [one sentence why]\n"
-        "POINT_5: [winner name] wins — [one sentence why]\n"
-        "VERDICT: The overall winner is [product] because [reason].\n\n"
-        "Make each point factual, specific, and no more than 15 words. "
-        "Use real products. Category: {category}"
+        "POINT_1: [aspect] — [what A does well] [what B does well]\n"
+        "POINT_2: [aspect] — [what A does well] [what B does well]\n"
+        "POINT_3: [aspect] — [what A does well] [what B does well]\n"
+        "POINT_4: [aspect] — [what A does well] [what B does well]\n"
+        "POINT_5: [aspect] — [what A does well] [what B does well]\n"
+        "RECOMMENDATION: Buy [product] if you want [reason]. Get [product] if you need [reason].\n\n"
+        "Rules:\n"
+        "- No winners, no losers. Just honest pros and cons.\n"
+        "- Each point covers a different aspect (display, battery, camera, performance, price, etc.)\n"
+        "- Be specific with facts and numbers.\n"
+        "Category: {category}"
     ),
 }
 
@@ -36,11 +38,12 @@ TECH_CATEGORIES = [
 ]
 
 HOOKS = [
-    "Which one wins?", "Here's the real comparison:",
-    "Let's settle this once and for all:",
-    "The ultimate showdown:",
-    "Which should you buy?",
-    "Here's how they stack up:",
+    "Here's my honest review after testing both:",
+    "I tested both so you don't have to. Here's the truth:",
+    "Let me break this down for you:",
+    "Thinking of buying one? Here's what you need to know:",
+    "Full review of both — no bias, just facts:",
+    "I spent a week with both. Here's what I found:",
 ]
 
 
@@ -143,8 +146,8 @@ def _refill_comparisons(need: int) -> list:
         avoid = _avoid_sample("comparisons")
         prompt = REFILL_PROMPTS["comparisons"].format(category=category, avoid=avoid)
         try:
-            raw = _generate(prompt, temperature=0.8, max_tokens=600,
-                            system="You write factual tech comparison scripts for YouTube Shorts. Be specific with specs and features.")
+            raw = _generate(prompt, temperature=0.8, max_tokens=700,
+                            system="You write honest, balanced tech review scripts for YouTube Shorts. No winners, no bias — just real pros and cons backed by facts.")
         except Exception as e:
             print(f"  LLM error (comparisons): {e}")
             attempts += 1
@@ -156,8 +159,7 @@ def _refill_comparisons(need: int) -> list:
         lines = raw.strip().split("\n")
         product_a = product_b = ""
         points = []
-        verdict = ""
-        reason = ""
+        recommendation = ""
 
         for line in lines:
             line = line.strip()
@@ -171,19 +173,13 @@ def _refill_comparisons(need: int) -> list:
                 text = parts[-1].strip()
                 if text:
                     points.append(text)
-            elif up.startswith("VERDICT:"):
-                text = line.split(":", 1)[-1].strip()
-                if "because" in text.lower():
-                    verdict = text.split("because")[0].strip().replace("The overall winner is ", "").replace("The winner is ", "")
-                    reason = text.split("because")[-1].strip()
-                else:
-                    verdict = text
-                    reason = text
+            elif up.startswith("RECOMMENDATION:"):
+                recommendation = line.split(":", 1)[-1].strip()
 
-        if product_a and product_b and len(points) >= 4 and verdict:
+        if product_a and product_b and len(points) >= 4 and recommendation:
             if not _is_duplicate_products("comparisons", product_a, product_b, _read_bank("comparisons")):
                 hook = random.choice(HOOKS)
-                title = f"{product_a} vs {product_b} — {reason[:30]}"
+                title = f"{product_a} vs {product_b} — Honest Review"
                 image_prompts = [
                     f"product comparison, {product_a} vs {product_b} on a clean white background, side by side, 9:16 vertical, studio lighting, sharp focus, product photography"
                 ]
@@ -193,11 +189,11 @@ def _refill_comparisons(need: int) -> list:
                         f"9:16 vertical, dramatic lighting, tech review style, detailed macro shot"
                     )
 
-                tts_lines = [f"{hook} {product_a} vs {product_b}. Here are 5 reasons why."]
+                tts_lines = [f"{hook} Let's compare {product_a} and {product_b} across 5 categories."]
                 for i, p in enumerate(points, 1):
-                    tts_lines.append(f"Number {i}: {p}")
-                tts_lines.append(f"The winner is the {verdict}, because {reason}.")
-                tts_lines.append("Which one would you pick? Comment below and subscribe for more tech comparisons!")
+                    tts_lines.append(f"{i}. {p}")
+                tts_lines.append(f"Final take: {recommendation}")
+                tts_lines.append("Which one fits your needs better? Let me know in the comments and follow for more honest reviews!")
 
                 entry = {
                     "title": title[:70],
@@ -205,8 +201,7 @@ def _refill_comparisons(need: int) -> list:
                     "product_a": product_a,
                     "product_b": product_b,
                     "points": points,
-                    "verdict": verdict,
-                    "verdict_reason": reason,
+                    "recommendation": recommendation,
                     "image_prompts": image_prompts,
                     "script": " ".join(tts_lines),
                     "tts_script": " ".join(tts_lines),

@@ -69,30 +69,29 @@ def make_title_card(img, product_a, product_b):
     img = img.copy()
     overlay = Image.new("RGBA", (W, int(H*0.35)), (0,0,0,160))
     img.paste(overlay, (0, H-int(H*0.35)), overlay)
-    draw_text(img, f"{product_a}  VS  {product_b}", 48, H-320, center=True, color=(255,204,0))
-    draw_text(img, "WHICH ONE WINS?", 32, H-220, center=True)
-    draw_text(img, "⬇  WATCH TILL THE END  ⬇", 26, H-140, center=True, color=(255,200,0))
+    draw_text(img, f"{product_a}  VS  {product_b}", 44, H-320, center=True, color=(255,204,0))
+    draw_text(img, "HONEST REVIEW", 34, H-240, center=True)
+    draw_text(img, "I TESTED BOTH SO YOU DON'T HAVE TO", 24, H-170, center=True, color=(200,200,200))
     return img
 
 
-def make_point_card(img, point_text, point_num, total):
-    img = img.copy()
-    overlay = Image.new("RGBA", (W, int(H*0.25)), (0,0,0,180))
-    img.paste(overlay, (0, H-int(H*0.25)), overlay)
-
-    draw_text(img, f"Point {point_num} of {total}", 28, H-330, color=(255,204,0), center=True)
-    draw_text(img, point_text, 36, H-260)
-    return img
-
-
-def make_verdict_card(img, winner, reason):
+def make_review_card(img, point_text, point_num, total):
     img = img.copy()
     overlay = Image.new("RGBA", (W, int(H*0.3)), (0,0,0,180))
     img.paste(overlay, (0, H-int(H*0.3)), overlay)
 
-    draw_text(img, "🏆 THE WINNER", 44, H-340, center=True, color=(255,215,0))
-    draw_text(img, winner, 40, H-260, center=True, color=(0,255,100))
-    draw_text(img, f"Because: {reason}", 30, H-180, center=True)
+    draw_text(img, f"REVIEW {point_num} of {total}", 26, H-360, color=(255,204,0), center=True)
+    draw_text(img, point_text, 32, H-280)
+    return img
+
+
+def make_recommendation_card(img, recommendation):
+    img = img.copy()
+    overlay = Image.new("RGBA", (W, int(H*0.35)), (0,0,0,180))
+    img.paste(overlay, (0, H-int(H*0.35)), overlay)
+
+    draw_text(img, "🎯 FINAL TAKE", 42, H-400, center=True, color=(255,215,0))
+    draw_text(img, recommendation, 30, H-300)
     return img
 
 
@@ -100,8 +99,8 @@ def make_end_card(img):
     img = img.copy()
     overlay = Image.new("RGBA", (W, H), (0,0,0,120))
     img.paste(overlay, (0,0), overlay)
-    draw_text(img, "WHICH ONE WOULD YOU PICK?", 42, H//2 - 60, center=True, color=(255,204,0))
-    draw_text(img, "SUBSCRIBE FOR MORE TECH", 32, H//2 + 20, center=True)
+    draw_text(img, "WHICH ONE FITS YOU?", 40, H//2 - 60, center=True, color=(255,204,0))
+    draw_text(img, "FOLLOW FOR HONEST REVIEWS", 30, H//2 + 20, center=True)
     return img
 
 
@@ -110,7 +109,7 @@ motion_clip = fast_motion
 
 def main():
     print("="*50)
-    print("  TECH COMPARISON VIDEO GENERATOR")
+    print("  TECH REVIEW VIDEO GENERATOR")
     print("="*50)
 
     data = generate_comparison_script()
@@ -118,8 +117,7 @@ def main():
     PROD_A = data["product_a"]
     PROD_B = data["product_b"]
     POINTS = data["points"]
-    VERDICT = data["verdict"]
-    REASON = data["verdict_reason"]
+    RECOMMENDATION = data["recommendation"]
     PROMPTS = data["image_prompts"]
 
     temp_dir = config.TEMP_DIR / "comparisons"
@@ -130,7 +128,7 @@ def main():
     tts_path = temp_dir / "narration.mp3"
     subprocess.run([sys.executable, "-m", "edge_tts", "--text", tts_script, "--voice", "en-US-GuyNeural", "--write-media", str(tts_path)], capture_output=True, text=True, timeout=120, check=True)
     total_dur = get_audio_duration(str(tts_path))
-    print(f"  {total_dur:.1f}s | {len(POINTS)} comparison points")
+    print(f"  {total_dur:.1f}s | {len(POINTS)} review points")
 
     print(f"\n[2/4] Generating {len(PROMPTS)} images...")
     images = {}
@@ -163,13 +161,13 @@ def main():
 
     for i, point in enumerate(POINTS):
         img = images[min(i+1, len(images)-1)]
-        card = make_point_card(img, point, i+1, num_points)
+        card = make_review_card(img, point, i+1, num_points)
         shake = i == num_points - 1
         clips.append(fast_motion(card, point_dur, shake=shake))
 
-    verdict_img = images.get(len(images)-1, images[0])
-    verdict_card = make_verdict_card(verdict_img, VERDICT, REASON)
-    clips.append(fast_motion(verdict_card, 2.0, intensity=1.3))
+    rec_img = images.get(len(images)-1, images[0])
+    rec_card = make_recommendation_card(rec_img, RECOMMENDATION)
+    clips.append(fast_motion(rec_card, 2.0, intensity=1.3))
 
     overlays = hook_overlays(1.8)
     overlays += comment_prompt_overlay(start_time=max(total_dur * 0.4, 0.5), duration=2.0)
@@ -194,7 +192,7 @@ def main():
 
     print("\n[4/4] Rendering...")
     safe_title = TITLE.lower().replace(" ", "_").replace("?", "").replace("!", "").replace("'", "").replace(".","").replace(",","").replace(":","").replace("/","_")[:50]
-    out = config.OUTPUT_DIR / f"comparison_{safe_title}.mp4"
+    out = config.OUTPUT_DIR / f"review_{safe_title}.mp4"
     out.unlink(missing_ok=True)
     print(f"  {video_dur:.1f}s | {W}x{H}")
     t0 = time.time()
