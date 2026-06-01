@@ -20,9 +20,11 @@ TITLE_TEMPLATES = {
 DESCRIPTION_TEMPLATES = {
     "comparisons": [
         "Here is an honest breakdown of {product_a} vs {product_b} across 5 categories \u2014 no bias, just real pros and cons.\n\n"
+        "{full_script}\n\n"
         "Which one fits your needs? Let me know in the comments! \U0001f447",
         "Looking to buy {product_a} or {product_b}? Here is everything you need to know before spending your money.\n\n"
-        "Full review with real pros and cons. Comment your pick below! \U0001f4ac",
+        "Full review with real pros and cons:\n{full_script}\n\n"
+        "Comment your pick below! \U0001f4ac",
     ],
 }
 
@@ -58,12 +60,7 @@ def generate_viral_description(mode: str, data: dict, script: str = "") -> str:
     template = template.replace("{product_a}", data.get("product_a", "Product A"))
     template = template.replace("{product_b}", data.get("product_b", "Product B"))
     template = template.replace("{hook}", data.get("hook", ""))
-
-    if script:
-        preview = script[:150].strip()
-        if len(preview) >= 150:
-            preview += "..."
-        template += f"\n\n{preview}"
+    template = template.replace("{full_script}", script.strip() if script else "")
 
     template += f"\n\n{random.choice(ENGAGEMENT_TEMPLATES)}"
     template += f"\n\n🔗 {CHANNEL_HANDLE}"
