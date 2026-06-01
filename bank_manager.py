@@ -39,12 +39,13 @@ TECH_CATEGORIES = [
 ]
 
 HOOKS = [
-    "Here's my honest review after testing both:",
-    "I tested both so you don't have to. Here's the truth:",
+    "Here is an honest breakdown of both:",
     "Let me break this down for you:",
-    "Thinking of buying one? Here's what you need to know:",
-    "Full review of both — no bias, just facts:",
-    "I spent a week with both. Here's what I found:",
+    "Thinking of buying one? Here is what you need to know:",
+    "Full review of both \u2014 no bias, just facts:",
+    "Both products compared honestly:",
+    "Here is what the specs and reviews actually say:",
+    "Which one is right for you? Here is the truth:",
 ]
 
 
@@ -55,7 +56,7 @@ def _bank_path(mode: str) -> Path:
 def _read_bank(mode: str) -> dict:
     path = _bank_path(mode)
     if path.exists():
-        with open(path) as f:
+        with open(path, encoding="utf-8-sig") as f:
             return json.load(f)
     return {"entries": [], "used": [], "min_before_refill": 5, "refill_target": 40}
 
@@ -190,7 +191,7 @@ def _refill_comparisons(need: int) -> list:
                         f"9:16 vertical, dramatic lighting, tech review style, detailed macro shot"
                     )
 
-                tts_lines = [f"{hook} Let's compare {product_a} and {product_b} across 5 categories."]
+                tts_lines = [f"{hook} Comparing {product_a} and {product_b} across 5 categories."]
                 for i, p in enumerate(points, 1):
                     tts_lines.append(f"{i}. {p}")
                 tts_lines.append(f"Final take: {recommendation}")

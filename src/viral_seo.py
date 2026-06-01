@@ -5,26 +5,24 @@ CHANNEL_HANDLE = "@rawtechreview"
 
 TITLE_TEMPLATES = {
     "comparisons": [
-        "{product_a} vs {product_b} — Honest Review After Testing Both",
-        "I Tested {product_a} and {product_b} — Here's the Truth",
+        "{product_a} vs {product_b} — Honest Review Compared",
         "{product_a} vs {product_b}: Which One Should You Buy?",
-        "Don't Buy {product_a} or {product_b} Until You Watch This Review",
+        "Don't Buy {product_a} or {product_b} Until You See This Review",
         "{product_a} vs {product_b} — Real Pros and Cons",
         "Which Is Better For You? {product_a} vs {product_b}",
         "{product_a} vs {product_b} — 5 Category Breakdown",
         "The Real Difference Between {product_a} and {product_b}",
         "Honest Review: {product_a} vs {product_b}",
-        "Stop Wondering — {product_a} vs {product_b} Full Review",
+        "Stop Wondering \u2014 {product_a} vs {product_b} Full Review",
     ],
 }
 
 DESCRIPTION_TEMPLATES = {
     "comparisons": [
-        "I tested {product_a} and {product_b} so you don't have to.\n\n"
-        "Here's my honest breakdown across 5 categories — no bias, just real pros and cons.\n\n"
-        "Which one fits your needs? Let me know in the comments! 👇",
-        "Looking to buy {product_a} or {product_b}? Here's everything you need to know before spending your money.\n\n"
-        "Full review with real pros and cons. Comment your pick below! 💬",
+        "Here is an honest breakdown of {product_a} vs {product_b} across 5 categories \u2014 no bias, just real pros and cons.\n\n"
+        "Which one fits your needs? Let me know in the comments! \U0001f447",
+        "Looking to buy {product_a} or {product_b}? Here is everything you need to know before spending your money.\n\n"
+        "Full review with real pros and cons. Comment your pick below! \U0001f4ac",
     ],
 }
 

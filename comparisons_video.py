@@ -71,7 +71,7 @@ def make_title_card(img, product_a, product_b):
     img.paste(overlay, (0, H-int(H*0.35)), overlay)
     draw_text(img, f"{product_a}  VS  {product_b}", 44, H-320, center=True, color=(255,204,0))
     draw_text(img, "HONEST REVIEW", 34, H-240, center=True)
-    draw_text(img, "I TESTED BOTH SO YOU DON'T HAVE TO", 24, H-170, center=True, color=(200,200,200))
+    draw_text(img, "SPECS & REAL WORLD PERFORMANCE", 24, H-170, center=True, color=(200,200,200))
     return img
 
 

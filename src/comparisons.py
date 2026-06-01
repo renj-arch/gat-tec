@@ -2,12 +2,12 @@ import random
 import bank_manager
 
 HOOKS = [
-    "Here's my honest review after testing both:",
-    "I tested both so you don't have to. Here's the truth:",
+    "Here is an honest breakdown of both:",
     "Let me break this down for you:",
-    "Thinking of buying one? Here's what you need to know:",
-    "Full review of both — no bias, just facts:",
-    "I spent a week with both. Here's what I found:",
+    "Thinking of buying one? Here is what you need to know:",
+    "Full review of both \u2014 no bias, just facts:",
+    "Based on the specs and performance data, here is the breakdown:",
+    "Both products compared honestly:",
 ]
 
 CATEGORIES = [
