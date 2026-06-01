@@ -21,7 +21,8 @@ REFILL_PROMPTS = {
         "Rules:\n"
         "- No winners, no losers. Just honest pros and cons.\n"
         "- Each point covers a different aspect (display, battery, camera, performance, price, etc.)\n"
-        "- Be specific with facts and numbers.\n"
+        "- CRITICAL: Use ONLY facts you are 100%% sure are true. Never make up specs, numbers, or features.\n"
+        "- If you don't know the exact spec, describe it generally (e.g. 'fast charging' instead of a fake watt number).\n"
         "Category: {category}"
     ),
 }
@@ -147,7 +148,7 @@ def _refill_comparisons(need: int) -> list:
         prompt = REFILL_PROMPTS["comparisons"].format(category=category, avoid=avoid)
         try:
             raw = _generate(prompt, temperature=0.8, max_tokens=700,
-                            system="You write honest, balanced tech review scripts for YouTube Shorts. No winners, no bias — just real pros and cons backed by facts.")
+                            system="You write honest, balanced tech review scripts for YouTube Shorts. CRITICAL: Only use facts you are certain are true. Never fabricate specs, prices, or features. General descriptions are better than made-up numbers.")
         except Exception as e:
             print(f"  LLM error (comparisons): {e}")
             attempts += 1

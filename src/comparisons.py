@@ -120,11 +120,12 @@ def _try_llm() -> tuple | None:
             f"Rules:\n"
             f"- No winners, no losers. Just honest pros and cons for each.\n"
             f"- Each point covers a different aspect (display, battery, camera, performance, price, etc.)\n"
-            f"- Be specific with facts and numbers.\n"
-            f"- Use real products.\n"
+            f"- CRITICAL: Use ONLY facts you are 100% sure are true. Never make up specs, numbers, or features.\n"
+            f"- If you don't know the exact spec, describe it generally (e.g. 'fast charging' instead of a fake watt number).\n"
+            f"- Use real products with real, widely-known specifications.\n"
             f"Category: {category}"
         )
-        system = "You write honest, balanced tech review scripts for YouTube Shorts. No winners, no bias — just real pros and cons backed by facts."
+        system = "You write honest, balanced tech review scripts for YouTube Shorts. CRITICAL: Only use facts you are certain are true. Never fabricate specs, prices, or features. General descriptions are better than made-up numbers."
         raw = _generate(prompt, temperature=0.8, max_tokens=700, system=system)
         if not raw:
             return None
