@@ -68,7 +68,17 @@ def generate_comparison_script() -> dict:
     result = _try_llm()
     if not result:
         print("  LLM unavailable, using fallback")
-        result = random.choice(FALLBACKS)
+        data = bank_manager._read_bank("comparisons")
+        used = set(data.get("used", []))
+        available = [f for f in FALLBACKS
+                     if bank_manager._normalize(f[0]) not in used
+                     and bank_manager._normalize(f[1]) not in used]
+        if not available:
+            available = FALLBACKS
+        result = random.choice(available)
+        bank_manager._mark_used("comparisons", {
+            "product_a": result[0], "product_b": result[1]
+        })
 
     product_a, product_b, points, recommendation = result
 

@@ -100,7 +100,20 @@ def _is_duplicate_products(mode: str, product_a: str, product_b: str, data: dict
 
 
 def pick(mode: str) -> dict | None:
-    return None
+    data = _read_bank(mode)
+    entries = data.get("entries", [])
+    if not entries:
+        return None
+    idx = random.randrange(len(entries))
+    entry = entries.pop(idx)
+    data["entries"] = entries
+    if mode == "comparisons":
+        for p in [entry.get("product_a", ""), entry.get("product_b", "")]:
+            n = _normalize(p)
+            if n and n not in data.get("used", []):
+                data.setdefault("used", []).append(n)
+    _write_bank(mode, data)
+    return entry
 
 
 def count(mode: str) -> int:
