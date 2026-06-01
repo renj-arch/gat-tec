@@ -1,7 +1,7 @@
 import random
 
-CHANNEL_NAME = "TechnReview"
-CHANNEL_HANDLE = "@technreview"
+CHANNEL_NAME = "RawTechReview"
+CHANNEL_HANDLE = "@rawtechreview"
 
 TITLE_TEMPLATES = {
     "comparisons": [

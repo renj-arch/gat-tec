@@ -7,10 +7,10 @@ import config
 
 FONT = config.get_font()
 W, H = config.VIDEO_WIDTH, config.VIDEO_HEIGHT
-CHANNEL_NAME = "TechnReview"
-CHANNEL_HANDLE = "@technreview"
+CHANNEL_NAME = "RawTechReview"
+CHANNEL_HANDLE = "@rawtechreview"
 
-LOGO_PATH = Path(__file__).resolve().parent.parent / "technreview_logo.png"
+LOGO_PATH = Path(__file__).resolve().parent.parent / "rawtechreview_logo.png"
 
 _LOGO_CACHE = None
 def _create_channel_logo(size: int = 120) -> np.ndarray:
