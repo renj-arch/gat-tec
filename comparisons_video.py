@@ -1,0 +1,209 @@
+import sys, subprocess, time, io, random
+from pathlib import Path
+from PIL import Image, ImageEnhance, ImageDraw, ImageFont
+import numpy as np
+import requests as req
+from moviepy import VideoClip, AudioFileClip, concatenate_videoclips, CompositeAudioClip, concatenate_audioclips, CompositeVideoClip
+import config
+from src.comparisons import generate_comparison_script
+from src.engagement import hook_overlays, fast_motion, comment_prompt_overlay, subscribe_end_card, branding_overlays, get_audio_duration
+
+FONT_PATH = config.get_font()
+W, H = config.VIDEO_WIDTH, config.VIDEO_HEIGHT
+
+
+def gen_img(prompt: str) -> Image.Image | None:
+    url = f"https://image.pollinations.ai/prompt/{req.utils.quote(prompt)}?width={config.VIDEO_WIDTH}&height={config.VIDEO_HEIGHT}&nofeed=true&seed={random.randint(0,999999)}&model=flux"
+    try:
+        r = req.get(url, timeout=120)
+        if r.status_code == 200 and len(r.content) > 500:
+            return Image.open(io.BytesIO(r.content)).convert("RGB")
+    except:
+        pass
+    return None
+
+
+def upscale(img: Image.Image) -> Image.Image:
+    img = img.resize((W, H), Image.LANCZOS)
+    img = ImageEnhance.Contrast(img).enhance(1.2)
+    img = ImageEnhance.Color(img).enhance(1.2)
+    return img
+
+
+def draw_text(img, text, font_size, y, color=(255,255,255), stroke_color=(0,0,0), stroke_width=2, center=False, x=30):
+    draw = ImageDraw.Draw(img)
+    try:
+        font = ImageFont.truetype(FONT_PATH, font_size)
+    except:
+        font = ImageFont.load_default()
+    lines = []
+    for line in text.split("\n"):
+        words = line.split()
+        current = ""
+        for w in words:
+            test = f"{current} {w}".strip()
+            bb = draw.textbbox((0,0), test, font=font)
+            if bb[2] - bb[0] > W - 60:
+                lines.append(current)
+                current = w
+            else:
+                current = test
+        lines.append(current)
+    for i, line in enumerate(lines):
+        ly = y + i * (font_size + 8)
+        if center:
+            bb = draw.textbbox((0,0), line, font=font)
+            lx = (W - (bb[2] - bb[0])) // 2
+        else:
+            lx = x
+        if stroke_width > 0:
+            for dx in range(-stroke_width, stroke_width+1):
+                for dy in range(-stroke_width, stroke_width+1):
+                    if dx != 0 or dy != 0:
+                        draw.text((lx+dx, ly+dy), line, font=font, fill=stroke_color)
+        draw.text((lx, ly), line, font=font, fill=color)
+    return img
+
+
+def make_title_card(img, product_a, product_b):
+    img = img.copy()
+    overlay = Image.new("RGBA", (W, int(H*0.35)), (0,0,0,160))
+    img.paste(overlay, (0, H-int(H*0.35)), overlay)
+    draw_text(img, f"{product_a}  VS  {product_b}", 48, H-320, center=True, color=(255,204,0))
+    draw_text(img, "WHICH ONE WINS?", 32, H-220, center=True)
+    draw_text(img, "⬇  WATCH TILL THE END  ⬇", 26, H-140, center=True, color=(255,200,0))
+    return img
+
+
+def make_point_card(img, point_text, point_num, total):
+    img = img.copy()
+    overlay = Image.new("RGBA", (W, int(H*0.25)), (0,0,0,180))
+    img.paste(overlay, (0, H-int(H*0.25)), overlay)
+
+    draw_text(img, f"Point {point_num} of {total}", 28, H-330, color=(255,204,0), center=True)
+    draw_text(img, point_text, 36, H-260)
+    return img
+
+
+def make_verdict_card(img, winner, reason):
+    img = img.copy()
+    overlay = Image.new("RGBA", (W, int(H*0.3)), (0,0,0,180))
+    img.paste(overlay, (0, H-int(H*0.3)), overlay)
+
+    draw_text(img, "🏆 THE WINNER", 44, H-340, center=True, color=(255,215,0))
+    draw_text(img, winner, 40, H-260, center=True, color=(0,255,100))
+    draw_text(img, f"Because: {reason}", 30, H-180, center=True)
+    return img
+
+
+def make_end_card(img):
+    img = img.copy()
+    overlay = Image.new("RGBA", (W, H), (0,0,0,120))
+    img.paste(overlay, (0,0), overlay)
+    draw_text(img, "WHICH ONE WOULD YOU PICK?", 42, H//2 - 60, center=True, color=(255,204,0))
+    draw_text(img, "SUBSCRIBE FOR MORE TECH", 32, H//2 + 20, center=True)
+    return img
+
+
+motion_clip = fast_motion
+
+
+def main():
+    print("="*50)
+    print("  TECH COMPARISON VIDEO GENERATOR")
+    print("="*50)
+
+    data = generate_comparison_script()
+    TITLE = data["title"]
+    PROD_A = data["product_a"]
+    PROD_B = data["product_b"]
+    POINTS = data["points"]
+    VERDICT = data["verdict"]
+    REASON = data["verdict_reason"]
+    PROMPTS = data["image_prompts"]
+
+    temp_dir = config.TEMP_DIR / "comparisons"
+    temp_dir.mkdir(exist_ok=True)
+
+    print("\n[1/4] Voiceover...")
+    tts_script = data["tts_script"]
+    tts_path = temp_dir / "narration.mp3"
+    subprocess.run([sys.executable, "-m", "edge_tts", "--text", tts_script, "--voice", "en-US-GuyNeural", "--write-media", str(tts_path)], capture_output=True, text=True, timeout=120, check=True)
+    total_dur = get_audio_duration(str(tts_path))
+    print(f"  {total_dur:.1f}s | {len(POINTS)} comparison points")
+
+    print(f"\n[2/4] Generating {len(PROMPTS)} images...")
+    images = {}
+    for i, prompt in enumerate(PROMPTS):
+        cached = temp_dir / f"comp_{i}.png"
+        if cached.exists() and cached.stat().st_size > 50000:
+            img = Image.open(cached)
+        else:
+            print(f"  Image {i+1}/{len(PROMPTS)}...", end=" ", flush=True)
+            img = gen_img(prompt)
+            if img:
+                img = upscale(img)
+                img.save(cached)
+                print("OK")
+            else:
+                print("fallback")
+                arr = np.zeros((H, W, 3), dtype=np.uint8)
+                for y in range(H):
+                    arr[y,:] = [int(50+100*(y/H)), int(30+50*(1-y/H)), int(80+120*(y/H))]
+                img = Image.fromarray(arr)
+        images[i] = img
+
+    print("\n[3/4] Baking text...")
+    num_points = len(POINTS)
+    intro_dur = 2.5
+    point_dur = (total_dur - intro_dur - 3.5) / num_points
+
+    title_img = make_title_card(images[0], PROD_A, PROD_B)
+    clips = [motion_clip(title_img, intro_dur)]
+
+    for i, point in enumerate(POINTS):
+        img = images[min(i+1, len(images)-1)]
+        card = make_point_card(img, point, i+1, num_points)
+        shake = i == num_points - 1
+        clips.append(fast_motion(card, point_dur, shake=shake))
+
+    verdict_img = images.get(len(images)-1, images[0])
+    verdict_card = make_verdict_card(verdict_img, VERDICT, REASON)
+    clips.append(fast_motion(verdict_card, 2.0, intensity=1.3))
+
+    overlays = hook_overlays(1.8)
+    overlays += comment_prompt_overlay(start_time=max(total_dur * 0.4, 0.5), duration=2.0)
+
+    end_img = images.get(len(images)-1, images[0])
+    clips.append(subscribe_end_card(end_img, 1.5))
+
+    bg = concatenate_videoclips(clips, method="compose")
+    overlays += branding_overlays(bg.duration)
+    final = CompositeVideoClip([bg] + overlays, size=config.SHORTS_SIZE)
+    audio_clip = AudioFileClip(str(tts_path))
+    video_dur = total_dur + 1.0
+    if video_dur > audio_clip.duration:
+        silence = AudioFileClip(str(tts_path)).with_duration(video_dur - audio_clip.duration).with_volume_scaled(0)
+        audio_clip = concatenate_audioclips([audio_clip, silence])
+    music_paths = list(config.MUSIC_DIR.glob("*.mp3"))
+    if music_paths:
+        music = AudioFileClip(str(random.choice(music_paths))).with_duration(video_dur).with_volume_scaled(0.08)
+        final = final.with_audio(CompositeAudioClip([audio_clip, music]))
+    else:
+        final = final.with_audio(audio_clip)
+
+    print("\n[4/4] Rendering...")
+    safe_title = TITLE.lower().replace(" ", "_").replace("?", "").replace("!", "").replace("'", "").replace(".","").replace(",","").replace(":","").replace("/","_")[:50]
+    out = config.OUTPUT_DIR / f"comparison_{safe_title}.mp4"
+    out.unlink(missing_ok=True)
+    print(f"  {video_dur:.1f}s | {W}x{H}")
+    t0 = time.time()
+    final.write_videofile(str(out), fps=config.VIDEO_FPS, codec="libx264", audio_codec="aac", threads=4, preset="ultrafast", ffmpeg_params=["-movflags", "+faststart"], logger=None)
+    final.close()
+    t1 = time.time()
+    print(f"\n  DONE in {t1-t0:.0f}s: {out}")
+    return out, data
+
+
+if __name__ == "__main__":
+    main()
