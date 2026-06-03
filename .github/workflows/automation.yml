@@ -1,8 +1,6 @@
 name: Tech Comparison Automation
 
 on:
-  schedule:
-    - cron: '0 */4 * * *'
   workflow_dispatch:
     inputs:
       mode:
